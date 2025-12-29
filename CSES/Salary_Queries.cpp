@@ -13,16 +13,16 @@ typedef pair<int, int> pii;
 #define X first
 #define Y second
 #define fixed(n) fixed << setprecision(n)
-#define sz(s) int64_t(s.size())
+#define sz(s) int32_t(s.size())
 #define dbg(x) cout << #x << ": " << (x) << "\n";
-// #define getline(s) getline(cin >> ws, s)
+#define getline(s) getline(cin >> ws, s)
 #define Time cerr << "Time Taken: " << (float)clock() / CLOCKS_PER_SEC << " Secs" << "\n";
 #define all(vec) vec.begin(), vec.end()
 #define rall(v) v.rbegin(),v.rend()
 #define mul_mod(a, b) (((a % M) * (b % M)) % M)
 #define add_mod(a, b) (((a % M) + (b % M)) % M)
 #define sub_mod(a, b) (((a % M) - (b % M) + M) % M)
-const int N = 2e5 + 10, M = 1'000'000'007, OO = 0X3F3F3F3F3F3F3F3F;
+const int N = 1 << 17, M = 1'000'000'007, OO = 0X3F3F3F3F3F3F3F3F;
 const double EPS = 1e-9, pi = 3.141592653589793;
 #define kill return 0
 typedef vector<int> vi;
@@ -35,85 +35,111 @@ if(fopen(NAME ".in","r")) freopen(NAME ".in","r",stdin), \
 freopen(NAME ".out","w",stdout);
 template<class T>
 using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
- 
+
 void Zied() {
     ios_base::sync_with_stdio(false), cin.tie(nullptr), cout.tie(nullptr);
 #ifndef ONLINE_JUDGE
     freopen("input.txt", "r", stdin), freopen("output.txt", "w", stdout);
 #endif
 }
- 
+
 template<typename T = int>
 istream &operator >>(istream &in, vector<T> &v) {
     for (auto &x: v) in >> x;
     return in;
 }
- 
+
 template<typename T = int>
 ostream &operator <<(ostream &out, const vector<T> &v) {
     for (const T &x: v) out << x << ' ';
     return out;
 }
- 
+
 template<typename A, typename B>
 istream &operator>>(istream &fin, pair<A, B> &p) {
     fin >> p.X >> p.Y;
     return fin;
 }
- 
+
 template<typename A, typename B>
 std::ostream &operator<<(std::ostream &fout, const std::pair<A, B> &p) {
     fout << p.first << " " << p.second;
     return fout;
 }
- 
+
 enum dir { d, r, u, l, ul, dr, ur, dl };
- 
+
 int dx[8] = {1, 0, -1, 0, -1, 1, -1, 1};
 int dy[8] = {0, 1, 0, -1, -1, 1, 1, -1};
- 
- 
+
+
 void preprocessing() {
 }
- 
- 
-auto Solve(const int &n) -> void {
-    int m;
-    cin >> m;
-    vector<vector<int> > grid(n, vector<int>());
- 
-    for (int i = 0; i < m; ++i) {
-        int u , v; cin >> u >> v;
-        grid[--u].push_back(--v);
-        grid[v].push_back(u);
+
+int arr[N];
+extern struct node *const EMPTY;
+
+struct node {
+    int v;
+    node *l, *r;
+
+    node() : v(0), l(this), r(this) {
     }
- 
-    vi vis(n);
-    function<void(int)> dfs = [&](int u) {
-        vis[u] = 1;
-        for (auto v: grid[u]) {
-            if (!vis[v]) {
-                dfs(v);
-            }
-        }
-    };
- 
-    dfs(0);
-    int cnt = 0 ;
-    vector<pii> ans;
-    for (int i = 0; i < n; ++i) {
-        if (!vis[i]) {
-           dfs(i);
-            ans.emplace_back(1 , i+1);
-        }
+
+    node(int v) : v(v), l(EMPTY), r(EMPTY) {
     }
-    cout << sz(ans) << endl ;
-    for (int i = 0; i < sz(ans); ++i) {
-        cout << ans[i].X << " " << ans[i].Y << endl;
+};
+
+node *const EMPTY = new node();
+
+void add(int p,int v, node *&cur,int ns = 1,int ne = 1e9) {
+    // update
+    if (p < ns or p > ne)return;
+    if (cur == EMPTY)cur = new node(0);
+    if (ns == ne) {
+        cur->v += v;
+        return;
     }
- 
+    int m = ns + (ne - ns) / 2;
+    add(p, v, cur->l, ns, m);
+    add(p, v, cur->r, m + 1, ne);
+    cur->v = cur->l->v + cur->r->v;
 }
- 
+
+int query(int qs,int qe, node *&cur,int ns = 1,int ne = 1e9) {
+    if (qs > ne or qe < ns)return 0;
+    if (qs <= ns and qe >= ne)return cur->v;
+    if (cur == EMPTY) return 0;
+    int m = ns + (ne - ns) / 2;
+    return query(qs, qe, cur->l, ns, m) + query(qs, qe, cur->r, m + 1, ne);
+}
+
+auto Solve(const int &n) -> void {
+    int q;
+    cin >> q;
+    node *root = EMPTY;
+    vi a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> a[i];
+        add(a[i], 1, root);
+    }
+
+    for (int i = 0; i < q; ++i) {
+        char ty;
+        cin >> ty;
+        if (ty == '!') {
+            int idx, new_salary;
+            cin >> idx >> new_salary;
+            add(a[idx], -1, root);
+            a[idx] = new_salary;
+            add(a[idx], 1, root);
+        }else {
+            int s , e ; cin >> s >> e ;
+            cout << query(s , e , root) << endl;
+        }
+    }
+}
+
 bool solve_test(const int test_number) {
     int n = 1;
     // string n;
@@ -124,22 +150,22 @@ bool solve_test(const int test_number) {
     // cout << ans << endl;
     return true;
 }
- 
+
 void Stress() {
     // for (int n = 2; n <= 1; ++n)
     //     cerr << n << ' ' << Solve(n) << '\n';
 }
- 
+
 int32_t main() {
     Zied();
     Stress();
-    // freopen("ghanophobia.in", "r", stdin);
-    // freopen("output.txt", "w", stdout);
+    // freopen("document.in", "r", stdin);
+    // freopen("document.out", "w", stdout);
     preprocessing();
     int test_cases = 1;
     // cin >> test_cases;
     for (int tc = 1; tc <= test_cases; tc++) {
-        // cout << "Case " << tc << ": ";
+        // cout << "Case " << tc << ": " << endl;
         // cout << "Case #" << tc << ": ";
         if (!solve_test(tc))break;
         // cout << endl;
@@ -147,7 +173,7 @@ int32_t main() {
     kill;
     //    Time
 }
- 
+
 /*
   _____       _ _                      _______
  |  ___|     (_) |                    |___  (_)        | |
